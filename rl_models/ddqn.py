@@ -1,7 +1,6 @@
 import tensorflow as tf
 import numpy as np
 import trfl, gym
-import matplotlib.pyplot as plt
 
 from collections import deque
 
@@ -18,8 +17,10 @@ class QNetwork(object):
 
 			self.fc1 = tf.contrib.layers.fully_connected(self._inputs, hidden_size)
 			self.fc2 = tf.contrib.layers.fully_connected(self.fc1, hidden_size)
+			self.fc3 = tf.contrib.layers.fully_connected(self.fc2, hidden_size)
+			self.fc4 = tf.contrib.layers.fully_connected(self.fc3, hidden_size)
 
-			self.output = tf.contrib.layers.fully_connected(self.fc2, action_size,
+			self.output = tf.contrib.layers.fully_connected(self.fc4, action_size,
 															activation_fn=None)
 
 			self.name = name

@@ -59,6 +59,9 @@ class DeterministicEncoder(object):
     Returns:
       The encoded representation. Tensor of shape [B,target_observations,d]
     """
+    print(context_x)
+    print(context_y)
+    print(target_x)
 
     # Concatenate x and y along the filter axes
     encoder_input = tf.concat([context_x, context_y], axis=-1)

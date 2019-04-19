@@ -1,7 +1,6 @@
 import tensorflow as tf
 import numpy as np
 import trfl, gym
-import matplotlib.pyplot as plt
 
 from collections import deque
 
