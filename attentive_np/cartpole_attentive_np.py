@@ -169,7 +169,7 @@ class Decoder(object):
     dist = tf.contrib.distributions.MultivariateNormalDiag(
         loc=mu, scale_diag=sigma)
 
-    return dist, mu, sigma
+    return dist, mu
 
 class LatentModel(object):
   """The (A)NP model."""
@@ -226,7 +226,6 @@ class LatentModel(object):
       sigma: The variance of the predicted distribution.
           Tensor of shape [B,num_targets,d_y].
     """
-
     (context_x, context_y), target_x = query
 
     # Pass query through the encoder and the decoder
@@ -249,7 +248,7 @@ class LatentModel(object):
     else:
       representation = latent_rep
       
-    dist, mu, sigma = self._decoder(representation, target_x)
+    dist, mu = self._decoder(representation, target_x)
     
     # If we want to calculate the log_prob for training we will make use of the
     # target_y. At test time the target_y is not available so we return None.
@@ -266,7 +265,7 @@ class LatentModel(object):
       kl = None
       loss = None
 
-    return mu, sigma, log_p, kl, loss
+    return mu, log_p, kl, loss
 
 def uniform_attention(q, v):
   """Uniform attention. Equivalent to np.
@@ -347,7 +346,6 @@ def multihead_attention(q, k, v, num_heads=8):
   """
   d_k = q.get_shape().as_list()[-1]
   d_v = v.get_shape().as_list()[-1]
-  print(d_v)
   head_size = d_v / num_heads
   key_initializer = tf.random_normal_initializer(stddev=d_k**-0.5)
   value_initializer = tf.random_normal_initializer(stddev=d_v**-0.5)

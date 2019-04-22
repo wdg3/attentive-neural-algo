@@ -29,6 +29,8 @@ class QNetwork(object):
 			self.reward = tf.placeholder(tf.float32, [batch_size], name='reward')
 			self.discount = tf.constant(0.99, shape=[batch_size], dtype=tf.float32, name='discount')
 
+			print(self.output.shape)
+
 			q_loss, q_learning = trfl.double_qlearning(self.output, self._actions, self.reward,
 													   self.discount, self._targetQs, self.output)
 			self.loss = tf.reduce_mean(q_loss)
