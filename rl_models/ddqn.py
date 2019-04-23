@@ -19,7 +19,6 @@ class QNetwork(object):
 			self.fc2 = tf.contrib.layers.fully_connected(self.fc1, hidden_size)
 			self.fc3 = tf.contrib.layers.fully_connected(self.fc2, hidden_size)
 			self.fc4 = tf.contrib.layers.fully_connected(self.fc3, hidden_size)
-
 			self.output = tf.contrib.layers.fully_connected(self.fc4, action_size,
 															activation_fn=None)
 
@@ -28,8 +27,6 @@ class QNetwork(object):
 			self._targetQs = tf.placeholder(tf.float32, [batch_size, action_size], name='target')
 			self.reward = tf.placeholder(tf.float32, [batch_size], name='reward')
 			self.discount = tf.constant(0.99, shape=[batch_size], dtype=tf.float32, name='discount')
-
-			print(self.output.shape)
 
 			q_loss, q_learning = trfl.double_qlearning(self.output, self._actions, self.reward,
 													   self.discount, self._targetQs, self.output)

@@ -61,7 +61,7 @@ class DeterministicEncoder(object):
     """
 
     # Concatenate x and y along the filter axes
-    encoder_input = tf.concat([context_x, context_y], axis=-1)
+    encoder_input = tf.concat([context_x, tf.cast(context_y, tf.float32)], axis=-1)
 
     # Pass final axis through MLP
     hidden = batch_mlp(encoder_input, self._output_sizes, 
@@ -100,7 +100,7 @@ class LatentEncoder(object):
     """
 
     # Concatenate x and y along the filter axes
-    encoder_input = tf.concat([x, y], axis=-1)
+    encoder_input = tf.concat([x, tf.cast(y, tf.float32)], axis=-1)
     # Pass final axis through MLP
     hidden = batch_mlp(encoder_input, self._output_sizes, "latent_encoder")
       
@@ -159,17 +159,7 @@ class Decoder(object):
     # Pass final axis through MLP
     hidden = batch_mlp(hidden, self._output_sizes, "decoder")
 
-    # Get the mean an the variance
-    mu, log_sigma = tf.split(hidden, 2, axis=-1)
-
-    # Bound the variance
-    sigma = 0.1 + 0.9 * tf.nn.softplus(log_sigma)
-
-    # Get the distribution
-    dist = tf.contrib.distributions.MultivariateNormalDiag(
-        loc=mu, scale_diag=sigma)
-
-    return dist, mu, sigma
+    return tf.squeeze(hidden)
 
 class LatentModel(object):
   """The (A)NP model."""
@@ -249,24 +239,24 @@ class LatentModel(object):
     else:
       representation = latent_rep
       
-    dist, mu, sigma = self._decoder(representation, target_x)
+    hidden = self._decoder(representation, target_x)
     
     # If we want to calculate the log_prob for training we will make use of the
     # target_y. At test time the target_y is not available so we return None.
-    if target_y is not None:
-      log_p = dist.log_prob(target_y)
-      posterior = self._latent_encoder(target_x, target_y)
-      kl = tf.reduce_sum(
-          tf.contrib.distributions.kl_divergence(posterior, prior), 
-          axis=-1, keepdims=True)
-      kl = tf.tile(kl, [1, num_targets])
-      loss = - tf.reduce_mean(log_p - kl / tf.cast(num_targets, tf.float32))
-    else:
-      log_p = None
-      kl = None
-      loss = None
+    #if target_y is not None:
+    #  log_p = dist.log_prob(target_y)
+    #  posterior = self._latent_encoder(target_x, target_y)
+    #  kl = tf.reduce_sum(
+    #      tf.contrib.distributions.kl_divergence(posterior, prior), 
+    #      axis=-1, keepdims=True)
+    #  kl = tf.tile(kl, [1, num_targets])
+    #  loss = - tf.reduce_mean(log_p - kl / tf.cast(num_targets, tf.float32))
+    #else:
+    #  log_p = None
+    #  kl = None
+    #  loss = None
 
-    return mu, sigma, log_p, kl, loss
+    return hidden
 
 def uniform_attention(q, v):
   """Uniform attention. Equivalent to np.
@@ -347,7 +337,6 @@ def multihead_attention(q, k, v, num_heads=8):
   """
   d_k = q.get_shape().as_list()[-1]
   d_v = v.get_shape().as_list()[-1]
-  print(d_v)
   head_size = d_v / num_heads
   key_initializer = tf.random_normal_initializer(stddev=d_k**-0.5)
   value_initializer = tf.random_normal_initializer(stddev=d_v**-0.5)

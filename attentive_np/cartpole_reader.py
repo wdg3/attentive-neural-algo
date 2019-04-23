@@ -64,6 +64,7 @@ class CartpoleReader(object):
                                      maxval=self._max_num_context - num_context,
                                      dtype=tf.int32)
       num_total_points = num_context + num_target
+
       x_values = tf.cast(tf.random_uniform(
           [self._batch_size, num_total_points, self._x_size], 0, 1), tf.float32)
 

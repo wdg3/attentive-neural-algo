@@ -5,14 +5,14 @@ import matplotlib.pyplot as plt
 
 from rl_models.ddqn import QNetwork, Memory, copy_model_parameters
 
-env = gym.make('CartPole-v0')
+env = gym.make('LunarLander-v2')
 
 def main():
-	state_size = 4
-	action_size = 2
+	state_size = 8
+	action_size = 4
 
 	train_episodes = 1000
-	max_steps = 200
+	max_steps = 1000
 	gamma = 0.99
 
 	explore_start = 1.0
@@ -26,7 +26,7 @@ def main():
 	batch_size = 64
 	pretrain_length = batch_size
 
-	update_target_every = 200
+	update_target_every = 1000
 
 	tf.reset_default_graph()
 	mainQN = QNetwork(name='main_qn', state_size=state_size, action_size=action_size,
@@ -112,7 +112,7 @@ def main():
 				
 				# Set target_Qs to 0 for states where episode ends
 				episode_ends = (next_states == np.zeros(states[0].shape)).all(axis=1)
-				target_Qs[episode_ends] = (0, 0)
+				target_Qs[episode_ends] = (0, 0, 0, 0)
 
 				#TRFL way, calculate td_error within TRFL
 				loss, _ = sess.run([mainQN.loss, mainQN.opt],

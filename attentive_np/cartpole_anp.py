@@ -23,6 +23,8 @@ def main():
 		batch_size=16, max_num_context=MAX_CONTEXT_POINTS)
 	data_train = dataset_train.generate_curves()
 
+	print(dataset_train)
+
 	dataset_test = CartpoleReader(
 		batch_size=1, max_num_context=MAX_CONTEXT_POINTS, testing=True)
 	data_test = dataset_test.generate_curves()
