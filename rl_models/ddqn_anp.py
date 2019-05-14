@@ -5,6 +5,7 @@ import trfl, gym
 from collections import deque
 from attentive_np.attentive_np import Attention, LatentModel
 from attentive_np.cartpole_reader import *
+from snail import supervised_snail
 
 class QNetwork(object):
 
@@ -14,20 +15,26 @@ class QNetwork(object):
 		with tf.variable_scope(name):
 			self._model = model
 
-			self._context_x = tf.placeholder(tf.float32, [batch_size, context_size, state_size])
-			self._context_y = tf.placeholder(tf.int32, [batch_size, context_size, action_size])
-			self._target_x  = tf.placeholder(tf.float32, [batch_size, 1, state_size])
+			self._context_x = tf.placeholder(tf.float32, [None, context_size, state_size])
+			self._context_y = tf.placeholder(tf.int32, [None, context_size, action_size])
+			self._target_x  = tf.placeholder(tf.float32, [None, state_size])
 
-			self._query = ((self._context_x, self._context_y), self._target_x)
+			self._query = (self._target_x)
 
 			self._actions = tf.placeholder(tf.int32, [batch_size], name='actions')
 
-			self.output = model(self._query, 1)
+			self.output = tf.keras.layers.Flatten()(self._target_x)
+			self.output = tf.keras.layers.Dense(32, activation='relu')(self.output)
+			self.output = tf.keras.layers.Dense(32, activation='relu')(self.output)
+			self.output = tf.keras.layers.Dense(32, activation='relu')(self.output)
+			self.output = tf.keras.layers.Dense(32, activation='relu')(self.output)
+			self.output = tf.keras.layers.Dense(action_size, activation=None)(self.output)
+
+			#self.output = supervised_snail(_target_x, 1, 256)
 
 			#self.rep = tf.squeeze(tf.concat([self.mu, self.sigma], axis=1))
 
-			#self.output = tf.contrib.layers.fully_connected(self.rep, action_size,
-			#	activation_fn=None)
+			#self.output = model(self._query, 1)
 
 			self.name = name
 
@@ -35,8 +42,8 @@ class QNetwork(object):
 			self.reward = tf.placeholder(tf.float32, [batch_size], name='reward')
 			self.discount = tf.constant(0.99, shape=[batch_size], dtype=tf.float32, name='discount')
 
-			q_loss, q_learning = trfl.double_qlearning(self.output, self._actions, self.reward,
-													   self.discount, self._targetQs, self.output)
+			q_loss, q_learning = trfl.qlearning(self.output, self._actions, self.reward,
+													   self.discount, self._targetQs)
 			self.loss = tf.reduce_mean(q_loss)
 			self.opt = tf.train.AdamOptimizer(learning_rate).minimize(self.loss)
 
@@ -55,6 +62,8 @@ class Memory(object):
 								   replace=False)
 
 			return [self.buffer[ii] for ii in idx]
+	def last_n(self, n):
+		return [self.buffer[ii] for ii in range(len(self.buffer) - n,len(self.buffer))]
 
 def copy_model_parameters(sess, estimator1, estimator2):
 
