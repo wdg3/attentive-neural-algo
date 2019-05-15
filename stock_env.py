@@ -10,7 +10,7 @@ class StockEnvironment(object):
 		self.random = random
 		if self.random:
 			print("Populating with random data because of lack of access to dataset.")
-			print("Unlikely to learna. meaningful function.")
+			print("Unlikely to learn a meaningful function.")
 			self.X = pd.DataFrame(np.random.randn(100000, 232))
 			self.tickers = (np.random.rand(100000) * 500).astype(int)
 		else:
@@ -39,7 +39,6 @@ class StockEnvironment(object):
 		while len(self.curr_ticker) < 100:
 			choice = random.choice(self.tickers)
 			self.curr_ticker = self.X[self.tickers == choice]
-		print(choice)
 		self.curr_ticker = self.X[self.tickers == choice].copy()
 		self.idx = random.choice(range(len(self.curr_ticker) - 100))
 		self.start_idx = self.idx
