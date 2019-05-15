@@ -6,6 +6,7 @@ import numpy as np
 
 import math
 
+# One Fully connected layer for SNAIL architecture
 def fc_layer(inputs, units):
 	fc = tf.keras.layers.Dense(units, activation = None,
 		kernel_initializer = tf.keras.initializers.VarianceScaling(scale=2.0))(inputs)
@@ -29,6 +30,7 @@ def dense_block(inputs, d, filters):
 def tc_block(inputs, seq_length, filters):
 	log = math.log(seq_length) / math.log(2)
 	z = inputs
+	# Keep increasing dilation rate until desired level
 	for i in range(1, math.ceil(log)):
 		z = dense_block(z, 2 ** i, filters)
 
@@ -42,6 +44,7 @@ def attention_block(inputs, key_size, val_size):
 	sqrt_k = math.sqrt(key_size)
 
 	logits = tf.matmul(queries, tf.linalg.transpose(keys))
+	# Temporal masking so we don't "see" information we shouldn't
 	logits = tf.keras.layers.Masking(mask_value=0)(logits)
 	probs = tf.math.softmax(logits / sqrt_k)
 	
@@ -73,6 +76,7 @@ def supervised_snail(inputs, seq_length, dense_size):
 
 	return out
 
+# ONLY USED FOR EARLY SUPERVISED LEARNING TESTING
 def main():
 	tf.logging.set_verbosity(tf.logging.ERROR)
 	tf.reset_default_graph()
@@ -138,11 +142,6 @@ def main():
 				a = np.mean(p == batch_y)
 				accs.append(a)
 				losses.append(l)
-
-				#if step > 0 and (step % display_step == 0 or step == 1):
-				#	print("Step " + str(step) + ", Minibatch loss: " + \
-				#		"{:.4f}".format(l) + ", Training accuracy: " + \
-				#		"{:.3f}%".format(a * 100))
 
 				step += 1
 
