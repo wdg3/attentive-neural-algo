@@ -1,27 +1,5 @@
 # Attentive Neural Processes for Deep Reinforcement Learning
 
-## Getting Started
+## Milestone Test
 
-### Prerequisites
-
-### Installing
-
-## Running Tests
-
-### End-to-End Tests
-
-### Style Tests
-
-## Deployment
-
-## Built With
-
-## Contributing
-
-## Versioning
-
-## Authors
-
-## License
-
-## Acknowledgements
+I have implemented a deep Q-network with a Simple Neural Attentive MetaLearner as the underlying network. A small demo can be seen by cloning the repo and running test.py with the appropriate packages installed (numpy, pandas, tensorflow, trfl). Since the dataset is private, it is simply randomly generated data.
