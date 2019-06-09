@@ -7,37 +7,53 @@ import numpy as np
 import math
 
 # One Fully connected layer for SNAIL architecture
-def fc_layer(inputs, units):
-	fc = tf.keras.layers.Dense(units, activation = None,
-		kernel_initializer = tf.keras.initializers.VarianceScaling(scale=2.0))(inputs)
-	normed = tf.keras.layers.BatchNormalization()(fc)
-	activations = tf.nn.leaky_relu(normed)
+def fc_layer(inputs, units, layer, prefix):
+	bn = tf.keras.layers.BatchNormalization(name=prefix+'bn_' + str(layer))(inputs)
+	fc = tf.keras.layers.Dense(units, name = prefix+'dense_' + str(layer), 
+		activation = None, kernel_initializer = 'he_normal',
+		kernel_regularizer = tf.keras.regularizers.l2(1e-5))(bn)
+
+	activations = tf.keras.layers.Activation('relu', name=prefix+'relu_' + str(layer))(fc)
 
 	return activations
 
-# One layer of a temporal convolution block.
-def dense_block(inputs, d, filters):
-	xf = tf.keras.layers.Conv1D(filters = filters, kernel_size = 2, dilation_rate = d, padding = 'causal',
-		kernel_initializer=tf.keras.initializers.VarianceScaling(scale=2.0))(inputs)
-	xf = tf.keras.layers.BatchNormalization()(xf)
-	activations = tf.nn.leaky_relu(xf)
-	
-	activations = tf.keras.layers.Dropout(0.4)(activations)
+# One layer of a temporal convolution block. As described in Mishra et. al., 2017.
+def dense_block(inputs, d, filters, layer):
+	# We use the "gated activation" sigmoid * tanh.
+	# Batch norm and dropout are used in each block.
 
-	return tf.concat([inputs, activations], axis = -1)
+	# Sigmoid path
+	xf = tf.keras.layers.BatchNormalization(name = 'bn_sig_' + layer)(inputs)
+	xf = tf.keras.layers.Conv1D(filters = filters, kernel_size = 2, dilation_rate = d, padding = 'causal',
+		kernel_initializer='he_normal', name='conv1d_sig_' + layer,
+		kernel_regularizer=tf.keras.regularizers.l2(1e-5))(xf)
+	xf = tf.keras.layers.Activation('sigmoid', name='sigmoid' + layer)(xf)
+
+	# Tanh path
+	xg = tf.keras.layers.BatchNormalization(name = 'bn_tanh_' + layer)(inputs)
+	xg = tf.keras.layers.Conv1D(filters = filters, kernel_size = 2, dilation_rate = d, padding = 'causal',
+		kernel_initializer='he_normal', name='conv1d__tanh_' + layer,
+		kernel_regularizer=tf.keras.regularizers.l2(1e-5))(xg)
+	xg = tf.keras.layers.Activation('tanh', name='tanh' + layer)(xg)
+	
+	activations = tf.keras.layers.Multiply()([xf, xg])
+	activations = tf.keras.layers.Dropout(0.4, name='dropout_' + layer)(activations)
+
+	return tf.keras.layers.Concatenate(name='concat_' + layer)([activations, inputs])
 
 # Temporal convolution block
-def tc_block(inputs, seq_length, filters):
+def tc_block(inputs, seq_length, filters, layer, prefix):
 	log = math.log(seq_length) / math.log(2)
 	z = inputs
 	# Keep increasing dilation rate until desired level
 	for i in range(1, math.ceil(log)):
-		z = dense_block(z, 2 ** i, filters)
+		z = dense_block(z, 2 ** i, filters, prefix+str(layer) + '_' + str(i))
 
 	return z
 
-# Attention block
-def attention_block(inputs, key_size, val_size):
+# Attention block as described in Mishra et. al. 2017
+def attention_block(inputs):
+	key_size = val_size=16 #K, V
 	keys = tf.keras.layers.Dense(key_size, activation=None)(inputs)
 	queries = tf.keras.layers.Dense(key_size, activation=None)(inputs)
 	vals = tf.keras.layers.Dense(val_size, activation=None)(inputs)
@@ -50,33 +66,33 @@ def attention_block(inputs, key_size, val_size):
 	
 	read = tf.matmul(probs, vals)
 
-	read = tf.keras.layers.Dropout(0.4)(read)
-
 	return tf.concat([inputs, read], axis = -1)
 
-# Supervised Neural AttentIve metaLearner model
-def supervised_snail(inputs, seq_length, dense_size):
-	hidden = fc_layer(inputs, dense_size)
-	
-	hidden = tf.keras.layers.Dropout(0.4)(hidden)
+# Supervised Neural AttentIve metaLearner model.
+# As in Mishra et. al. 2017, we use two repetitions of 2
+# temporal convolution blocks followed by an attention block.
+def supervised_snail(inputs, seq_length, dense_size, prefix):
 
-	hidden = tc_block(hidden, seq_length, 32)
-	hidden = tc_block(hidden, seq_length, 32)
+	hidden = tc_block(inputs, seq_length, 32, 1, prefix)
+	hidden = tc_block(hidden, seq_length, 32, 2, prefix)
 	
-	hidden = attention_block(hidden, 32, 32)
+	# We use the Keras lambda wrapper to turn our attention block in a layer
+	# compatible with the Keras framework.
+	hidden = tf.keras.layers.Lambda(attention_block, name=prefix+'attn_1')(hidden)
 	
-	hidden = tc_block(hidden, seq_length, 64)
-	hidden = tc_block(hidden, seq_length, 64)
+	hidden = tc_block(hidden, seq_length, 32, 4, prefix)
+	hidden = tc_block(hidden, seq_length, 32, 5, prefix)
 	
-	hidden = tf.layers.Flatten()(hidden)
-	
-	hidden = fc_layer(hidden, dense_size)
-	
-	out = tf.keras.layers.Dropout(0.4)(hidden)
+	hidden = tf.keras.layers.Lambda(attention_block, name=prefix+'attn_2')(hidden)
+
+	hidden = tf.layers.Flatten(name = prefix+'flatten_post')(hidden)
+
+	# We output a 256 length encoding vector in our final model.
+	out = fc_layer(hidden, dense_size, 7, prefix)
 
 	return out
 
-# ONLY USED FOR EARLY SUPERVISED LEARNING TESTING
+# ONLY USED FOR EARLY SUPERVISED LEARNING TESTING. NOT USED IN FINAL MODEL.
 def main():
 	tf.logging.set_verbosity(tf.logging.ERROR)
 	tf.reset_default_graph()
@@ -91,8 +107,8 @@ def main():
 	test_x  = test_x.reshape(test_x.shape[0], timesteps, test_x.shape[2])
 
 	# Using every other sample for memory reasons
-	train_x = train_x[::2,:,:]
-	train_y = train_y[::2,:]
+	train_x = train_x[::4,:,:]
+	train_y = train_y[::4,:]
 	print(np.mean(train_y))
 
 	# Parameter definitions
@@ -110,7 +126,7 @@ def main():
 	X = tf.placeholder(tf.float32, [None, t, n_x])
 	Y = tf.placeholder(tf.float32, [None, n_classes])
 
-	logits = supervised_snail(X, t, dense_size, n_classes)
+	logits = supervised_snail(X, t, dense_size)
 	y_hat = tf.keras.layers.Dense(n_classes, activation=tf.nn.sigmoid)(logits)
 	preds = tf.math.round(y_hat)
 	loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels = Y, logits = y_hat), axis = 0)[0]
@@ -155,3 +171,6 @@ def main():
 			save_path = saver.save(sess, "../models/model.ckpt")
 			print("Model saved in path: %s" % save_path)
 			print()
+
+if __name__ == '__main__':
+	main()
