@@ -5,11 +5,11 @@ This repository requires Tensorflow 1.13.1 and NumPy to run.
 
 We experimented with reinforcement learning approaches and attentive neural processes before settling on a supervised SNAIL approach. All the code has been included for context, but the relevant files for the final submission are:
 
-- framework.py
-- data_utils.py
-- snail.py
-- plotting.py
-- run_framework.sh
+- **framework.py**
+- **data_utils.py**
+- **snail.py**
+- **plotting.py**
+- **run_framework.sh**
 
 The baseline and experimental models are included in /baseline/ and /experimental/.
 
