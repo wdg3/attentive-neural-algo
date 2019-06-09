@@ -5,6 +5,6 @@ This repository requires Tensorflow 1.13.1 and NumPy to run.
 
 ## Demos
 
-Simply download the repository and run run_framework.sh to see a comparison of the baseline model and experimental model against historical returns for the Dow Jones Industrial Average.
+Run plotting.py to see plots of historical performance of the experimental and baseline models compared to the Dow Jones Industrial average and Intel Corporation.
 
-Run plotting.py to see plots of historical performance.
+Since the dataset used for this model is private, we are unfortunately unable to provide any samples. Run run_framework.sh to load the experimental and baseline models and run them on randomly generated dummy data of the appropriate shape.
