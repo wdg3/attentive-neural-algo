@@ -3,6 +3,14 @@
 
 This repository requires Tensorflow 1.13.1 and NumPy to run.
 
+We experimented with reinforcement learning approaches and attentive neural processes before settling on a supervised SNAIL approach. All the code has been included for context, but the relevant files for the final submission are:
+
+- framework.py
+- data_utils.py
+- snail.py
+- plotting.py
+- run_framework.sh
+
 ## Demos
 
 Run **plotting.py** to see plots of historical performance of the experimental and baseline models compared to the Dow Jones Industrial average and Intel Corporation.
