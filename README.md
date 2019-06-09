@@ -1,5 +1,6 @@
 # Attentive Neural Models for Algorithmic Trading
 ## CS 230, Stanford University
+## Will Geoghegan, SUNet ID: willgeo@stanford.edu
 
 This repository requires Tensorflow 1.13.1 and NumPy to run.
 
