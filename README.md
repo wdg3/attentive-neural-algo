@@ -7,6 +7,6 @@ This repository requires Tensorflow 1.13.1 and NumPy to run.
 
 Run plotting.py to see plots of historical performance of the experimental and baseline models compared to the Dow Jones Industrial average and Intel Corporation.
 
-Since the dataset used for this model is private, we are unfortunately unable to provide any samples. Run run_framework.sh to load the experimental and baseline models and run them on randomly generated dummy data of the appropriate shape.
+Since the dataset used for this model is private, we are unfortunately unable to provide any samples. Run run_framework.sh to watch models train on dummy data.
 
-Use DEMO = True to see model work on dummy data, and load = False to see the models train.
+Use load=False to load the experimental and baseline models and run them on the dummy data (they are trained on real data so they will not be successful).
