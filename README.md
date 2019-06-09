@@ -1,7 +1,10 @@
-# Attentive Neural Processes for Deep Reinforcement Learning
+# Attentive Neural Models for Algorithmic Trading
+## CS 230, Stanford University
 
-## Milestone Test
+This repository requires Tensorflow 1.13.1 and NumPy to run.
 
-I have implemented a deep Q-network with a Simple Neural Attentive MetaLearner as the underlying network. A small demo can be seen by cloning the repo and running test.py with the appropriate packages installed (numpy, pandas, tensorflow, trfl). Since the dataset is private, it is simply randomly generated data with the same dimensions as the actual dataset.
+## Demos
 
-The most relevant files for the demo are test.py, snail.py, stock_env.py, and rl_models/ddqn_snail.py.
+Simply download the repository and run run_framework.sh to see a comparison of the baseline model and experimental model against historical returns for the Dow Jones Industrial Average.
+
+Run plotting.py to see plots of historical performance.
