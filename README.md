@@ -11,6 +11,8 @@ We experimented with reinforcement learning approaches and attentive neural proc
 - plotting.py
 - run_framework.sh
 
+The baseline and experimental models are included in /baseline/ and /experimental/.
+
 ## Demos
 
 Run **plotting.py** to see plots of historical performance of the experimental and baseline models compared to the Dow Jones Industrial average and Intel Corporation.
